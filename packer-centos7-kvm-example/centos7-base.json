@@ -1,0 +1,72 @@
+{
+  "builders": [
+    {
+      "accelerator": "kvm",
+      "boot_command": [
+        "<up><wait><tab><wait> text ks=http://{{ .HTTPIP }}:{{ .HTTPPort }}/c7-kvm-ks.cfg<enter><wait>"
+      ],
+      "boot_wait": "10s",
+      "disk_interface": "virtio",
+      "disk_size": "150000",
+      "format": "qcow2",
+      "headless": true,
+      "host_port_min": 2222,
+      "host_port_max": 2229,
+      "http_directory": "docroot",
+      "http_port_max": 10089,
+      "http_port_min": 10082,
+      "iso_url": "file:///data/iso/CentOS-7-x86_64-Minimal-2009.iso",
+      "iso_checksum": "md5:a4711c4fa6a1fb32bd555fae8d885b12",
+      "net_device": "virtio-net",
+      "output_directory": "centos7-base-img",
+      "qemuargs": [
+        [
+          "-m",
+          "2048M"
+        ],
+        [
+          "-smp",
+          "cpus=1,maxcpus=16,cores=4"
+        ]
+      ],
+      "vnc_bind_address": "0.0.0.0",
+      "shutdown_command": "shutdown -P now",
+      "ssh_password": "your_password",
+      "ssh_port": 22,
+      "ssh_timeout": "1200s",
+      "ssh_username": "root",
+      "type": "qemu",
+      "vm_name": "centos7-base"
+    }
+  ],
+  "provisioners": [
+    {
+      "command": "tar zcf stardata-install.tar.gz stardata-install/",
+      "type": "shell-local"
+    },
+    {
+      "destination": "/root/stardata-install.tar.gz",
+      "source": "stardata-install.tar.gz",
+      "type": "file"
+    },
+    {
+      "inline": [
+        "cd /root/",
+        "tar zxf stardata-install.tar.gz",
+        "cd stardata-install/",
+        "bash -x ./install.sh",
+        "yum clean all",
+        "yum -y install epel-release",
+        "yum install ansible -y"
+      ],
+      "pause_before": "5s",
+      "type": "shell"
+    },
+    {
+      "type": "ansible-local",
+      "playbook_dir": "ansible",
+      "playbook_file": "ansible/site.yml"
+    }
+  ]
+}
+
